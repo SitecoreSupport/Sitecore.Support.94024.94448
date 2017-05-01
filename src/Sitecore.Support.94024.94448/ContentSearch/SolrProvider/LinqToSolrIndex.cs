@@ -1,30 +1,51 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
-using Sitecore.Diagnostics;
-
-namespace Sitecore.Support.ContentSearch.SolrProvider
+﻿namespace Sitecore.Support.ContentSearch.SolrProvider
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Reflection;
+    using Sitecore.ContentSearch.Linq;
+    using Sitecore.ContentSearch.Linq.Common;
+    using Sitecore.ContentSearch.Linq.Methods;
+    using Sitecore.ContentSearch.Linq.Nodes;
+    using Sitecore.ContentSearch.Linq.Solr;
+    using Sitecore.ContentSearch.Utilities;
+    using Sitecore.Diagnostics;
+    using SolrNet;
     public class LinqToSolrIndex<TItem> : Sitecore.ContentSearch.SolrProvider.LinqToSolrIndex<TItem>
     {
         private static readonly FieldInfo contextFieldInfo;
         private static readonly MethodInfo executeMethodInfo;
+        private static readonly MethodInfo applyScalarMethods;
+        private static readonly FieldInfo queryMapperFieldInfo;
         static LinqToSolrIndex()
         {
             contextFieldInfo = typeof(Sitecore.ContentSearch.SolrProvider.LinqToSolrIndex<TItem>).GetField("context",
-            BindingFlags.NonPublic | BindingFlags.Instance);
-            Assert.IsNotNull(contextFieldInfo, "Could not find 'context' field in type Sitecore.ContentSearch.SolrProvider.LinqToSolrIndex<TItem>");
+                BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.IsNotNull(contextFieldInfo,
+                "Could not find 'context' field in type Sitecore.ContentSearch.SolrProvider.LinqToSolrIndex<TItem>");
             executeMethodInfo = typeof(Sitecore.ContentSearch.SolrProvider.LinqToSolrIndex<TItem>).GetMethod("Execute",
-            BindingFlags.NonPublic | BindingFlags.Instance);
-            Assert.IsNotNull(executeMethodInfo, "Could not find 'Execute' method in type Sitecore.ContentSearch.SolrProvider.LinqToSolrIndex<TItem>");
+                BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.IsNotNull(executeMethodInfo,
+                "Could not find 'Execute' method in type Sitecore.ContentSearch.SolrProvider.LinqToSolrIndex<TItem>");
+            queryMapperFieldInfo = typeof(SolrIndex<TItem>).GetField("queryMapper",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.IsNotNull(contextFieldInfo,
+                "Could not find 'queryMapper' field in type SolrIndex<TItem>");
+            applyScalarMethods =
+                typeof(Sitecore.ContentSearch.SolrProvider.LinqToSolrIndex<TItem>).GetMethod("ApplyScalarMethods",
+                    BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.IsNotNull(executeMethodInfo,
+                "Could not find 'ApplyScalarMethods' method in type Sitecore.ContentSearch.SolrProvider.LinqToSolrIndex<TItem>");
         }
 
-        public LinqToSolrIndex(SolrSearchContext context, Sitecore.ContentSearch.Linq.Common.IExecutionContext executionContext) : base(context, executionContext)
+        public LinqToSolrIndex(Sitecore.ContentSearch.SolrProvider.SolrSearchContext context, Sitecore.ContentSearch.Linq.Common.IExecutionContext executionContext) : this(context, new[] { executionContext })
         {
         }
 
-        public LinqToSolrIndex(SolrSearchContext context, Sitecore.ContentSearch.Linq.Common.IExecutionContext[] executionContexts) : base(context, executionContexts)
+        public LinqToSolrIndex(Sitecore.ContentSearch.SolrProvider.SolrSearchContext context, Sitecore.ContentSearch.Linq.Common.IExecutionContext[] executionContexts) : base(context, executionContexts)
         {
+            Sitecore.Support.ContentSearch.SolrProvider.LinqToSolrIndex<TItem>.queryMapperFieldInfo.SetValue(this, new Sitecore.Support.ContentSearch.Linq.Solr.SolrQueryMapper(base.Parameters));
         }
 
         public override IEnumerable<TElement> FindElements<TElement>(SolrCompositeQuery compositeQuery)
@@ -133,6 +154,11 @@ namespace Sitecore.Support.ContentSearch.SolrProvider
             var selectMethods = compositeQuery.Methods.Where(m => m.MethodType == QueryMethodType.Select).Select(m => (SelectMethod)m).ToList();
 
             return selectMethods.Count() == 1 ? selectMethods[0] : null;
+        }
+
+        protected object ApplyScalarMethods<TResult, TDocument>(SolrCompositeQuery compositeQuery, object processedResults, SolrQueryResults<Dictionary<string, object>> results)
+        {
+            return applyScalarMethods.MakeGenericMethod(new Type[] { typeof(TResult), typeof(TDocument) }).Invoke(this, new object[] { compositeQuery, processedResults, results });
         }
     }
 }

@@ -1,5 +1,9 @@
 ﻿namespace Sitecore.Support.ContentSearch.SolrProvider
 {
+    using Sitecore.ContentSearch;
+    using Sitecore.ContentSearch.Maintenance;
+    using Sitecore.ContentSearch.Security;
+
     public class SolrSearchIndex : Sitecore.ContentSearch.SolrProvider.SolrSearchIndex, ISearchIndex
     {
         protected internal ConnectionStatus PreviousConnectionStatus = ConnectionStatus.Unknown;

@@ -1,9 +1,14 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Sitecore.Diagnostics;
-
-namespace Sitecore.Support.ContentSearch.SolrProvider
+﻿namespace Sitecore.Support.ContentSearch.SolrProvider
 {
+    using System.Collections.Generic;
+    using System.Linq;
+    using Sitecore.ContentSearch.Diagnostics;
+    using Sitecore.ContentSearch.Pipelines.QueryGlobalFilters;
+    using Sitecore.ContentSearch.Pipelines;
+    using Sitecore.ContentSearch.SearchTypes;
+    using Sitecore.ContentSearch.Security;
+    using Sitecore.Diagnostics;
+    using Sitecore.ContentSearch.Linq.Common;
     public class SolrSearchContext : Sitecore.ContentSearch.SolrProvider.SolrSearchContext, Sitecore.ContentSearch.IProviderSearchContext
     {
         public SolrSearchContext(Sitecore.ContentSearch.SolrProvider.SolrSearchIndex solrSearchIndex, SearchSecurityOptions options) : base(solrSearchIndex, options)
@@ -45,8 +50,8 @@ namespace Sitecore.Support.ContentSearch.SolrProvider
             IQueryable<TItem> result = linqToSolrIndex.GetQueryable();
             if (typeof(TItem).IsAssignableFrom(typeof(SearchResultItem)))
             {
-                QueryGlobalFiltersArgs queryGlobalFiltersArgs = new QueryGlobalFiltersArgs(linqToSolrIndex.GetQueryable(), typeof(TItem), executionContexts.ToList<IExecutionContext>());
-                this.Index.Locator.GetInstance<Sitecore.Abstractions.ICorePipeline>().Run("contentSearch.getGlobalLinqFilters", queryGlobalFiltersArgs);
+                QueryGlobalFiltersArgs queryGlobalFiltersArgs = new QueryGlobalFiltersArgs(result, typeof(TItem), executionContexts.ToList<IExecutionContext>());
+                this.Index.Locator.GetInstance<Sitecore.Abstractions.ICorePipeline>().Run(PipelineNames.QueryGlobalFilters, queryGlobalFiltersArgs);
                 result = (IQueryable<TItem>)queryGlobalFiltersArgs.Query;
             }
             return result;
