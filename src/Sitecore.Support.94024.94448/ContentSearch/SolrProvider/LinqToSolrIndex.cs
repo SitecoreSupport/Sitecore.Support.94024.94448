@@ -45,7 +45,7 @@
 
         public LinqToSolrIndex(Sitecore.ContentSearch.SolrProvider.SolrSearchContext context, Sitecore.ContentSearch.Linq.Common.IExecutionContext[] executionContexts) : base(context, executionContexts)
         {
-            Sitecore.Support.ContentSearch.SolrProvider.LinqToSolrIndex<TItem>.queryMapperFieldInfo.SetValue(this, new Sitecore.Support.ContentSearch.Linq.Solr.SolrQueryMapper(base.Parameters));
+            Sitecore.Support.ContentSearch.SolrProvider.LinqToSolrIndex<TItem>.queryMapperFieldInfo.SetValue(this, new Sitecore.ContentSearch.Linq.Solr.SolrQueryMapper(base.Parameters));
         }
 
         public override IEnumerable<TElement> FindElements<TElement>(SolrCompositeQuery compositeQuery)
