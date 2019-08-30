@@ -21,11 +21,9 @@ namespace Sitecore.Support.ContentSearch.SolrProvider
 
         public override IQueryable<TItem> GetQueryable<TItem>(params IExecutionContext[] executionContexts)
         {
-            System.Globalization.CultureInfo cultureInfo = System.Globalization.CultureInfo.GetCultureInfo(ContentSearchManager.SearchConfiguration.AnalyticsDefaultLanguage);
             System.Collections.Generic.List<IExecutionContext> updatedContexts = (from x in executionContexts
                                                                        where !(x is CultureExecutionContext)
-                                                                       select x).ToList<IExecutionContext>();
-            updatedContexts.Add(new CultureExecutionContext(cultureInfo));
+                                                                       select x).ToList<IExecutionContext>();            
 
             var failResistantSolrSearchIndex = this.Index as Sitecore.Support.ContentSearch.SolrProvider.SolrSearchIndex;
             if (failResistantSolrSearchIndex != null && failResistantSolrSearchIndex.PreviousConnectionStatus != ConnectionStatus.Succeded)
